@@ -1,0 +1,13 @@
+{
+  "name": "@vue-cot/server",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Mock TAK server emitting CoT messages for development and tests",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
+  }
+}

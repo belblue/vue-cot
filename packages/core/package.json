@@ -1,0 +1,16 @@
+{
+  "name": "@vue-cot/core",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Vue 3 composables and parser for Cursor on Target (CoT) tactical messaging",
+  "license": "MIT",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "vue": "^3.5.0"
+  }
+}
