@@ -71,8 +71,12 @@ export function useReconnectingWebSocket(
     ws?.close;
   }
 
+  function send(payload: string) {
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(payload);
+  }
+
   connect();
   onScopeDispose(close);
 
-  return { status, data, attempts, reconnect, close };
+  return { status, data, attempts, reconnect, close, send };
 }

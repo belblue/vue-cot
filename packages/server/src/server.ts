@@ -11,7 +11,7 @@ function makeCot(): string {
 
 wss.on("connection", (socket) => {
   console.warn("[mock-tak] client connected");
-  const timer = setInterval(() => socket.send(makeCot()), 1000);
+  const timer = setInterval(() => socket.send(`${makeCot()}\n`), 1000);
 
   socket.on("close", () => {
     clearInterval(timer);
