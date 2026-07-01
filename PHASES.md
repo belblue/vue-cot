@@ -48,7 +48,7 @@ Monorepo foundation before any feature code.
 
 ---
 
-## Phase 3 — TAK connection layer `[ ]`
+## Phase 3 — TAK connection layer `[x]`
 
 **Builds:** `useTakConnection(url, options)` · ping/pong keepalive · newline-delimited message framing · `onConnect`/`onDisconnect`/`onMessage`/`onError` hooks.
 

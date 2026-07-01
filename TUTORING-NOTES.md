@@ -380,3 +380,146 @@ export function useReconnectingWebSocket(url: string, options: ReconnectingOptio
 
 **Chunk 6 — export:** `export * from './composables/use-reconnecting-websocket'` in
 `index.ts`.
+
+---
+
+## Phase 3 — TAK connection layer
+
+**Problem: zombie connections.** A socket can look `open` to the browser while the
+server is actually gone (crash / network death, no `close` frame sent). `readyState`
+says OPEN but nothing flows. **Fix: application-level keepalive** — periodically ping,
+and if no traffic arrives within a timeout, declare it dead and reconnect. Browsers don't
+expose WebSocket ping frames to JS (and proxies strip them), so TAK does it at the app
+level. Plus **message framing**: TAK delimits CoT events with `\n`, and one socket
+message may carry several events or half of one — so we buffer and split on `\n`.
+
+### Prerequisite — expose `send` on `useReconnectingWebSocket`
+
+```ts
+function send(payload: string) {
+  if (ws && ws.readyState === WebSocket.OPEN)
+    ws.send(payload)
+}
+// added to its return: { status, data, attempts, reconnect, close, send }
+```
+
+- `ws && ws.readyState === WebSocket.OPEN` — guard `null` first (between reconnects),
+  then check it's open, before sending.
+
+### Mock server — newline-delimit
+
+```ts
+const timer = setInterval(() => socket.send(`${makeCot()}\n`), 1000)
+```
+
+- Append `\n` so each CoT is a complete frame — matches real TAK and lets the client's
+  framing flush.
+
+### `useTakConnection` — the composable
+
+File: `packages/core/src/composables/use-tak-connection.ts`. **Wraps**
+`useReconnectingWebSocket` (builds on its returned API — no raw socket re-wiring).
+
+**Chunk 1 — imports + options type**
+
+```ts
+import { useReconnectingWebSocket } from './use-reconnecting-websocket'
+import { onScopeDispose, watch } from 'vue'
+
+export type TakConnectionOptions = {
+  pingIntervalMs?: number
+  pingTimeoutMs?: number
+  onConnect?: () => void
+  onMessage?: (cot: string) => void
+  onDisconnect?: () => void
+  onError?: () => void
+}
+```
+
+- value import (we call it) + `watch`/`onScopeDispose` from Vue.
+- options = keepalive timings + four lifecycle hooks, all optional. `onMessage` receives
+  one framed CoT string.
+
+**Chunk 2 — shell + wrap the lower layer**
+
+```ts
+export function useTakConnection(url: string, options: TakConnectionOptions = {}) {
+  const connection = useReconnectingWebSocket(url)
+  const { status, data, attempts, reconnect, close, send } = connection
+  const { pingIntervalMs = 15_000, pingTimeoutMs = 30_000 } = options
+  let lastSeen = Date.now()
+```
+
+- `options = {}` default so `useTakConnection(url)` works.
+- destructure the lower layer's API. **`close` must be here** — omit it and `return
+  { close }` silently grabs the global `window.close` (no TS error, wrong behaviour).
+- destructure timings with defaults (15s ping, 30s timeout).
+- `lastSeen` — timestamp of the last sign of life; `let` (reassigned constantly).
+
+**Chunk 3 — lifecycle hooks via a status watch**
+
+```ts
+  watch(status, (newStatus, oldStatus) => {
+    if (newStatus === 'open') {
+      lastSeen = Date.now()
+      options.onConnect?.()
+    }
+    else if (oldStatus === 'open') {
+      options.onDisconnect?.()
+    }
+  })
+```
+
+- `watch(status, (new, old) => ...)` runs on every status change (lazy — only on change).
+- became open → reset `lastSeen` (so a stale value can't instantly trigger "dead") and
+  fire `onConnect?.()` (optional call — only if provided).
+- left open → fire `onDisconnect?.()`.
+
+**Chunk 4 — liveness + framing watches**
+
+```ts
+  watch(data, () => {
+    lastSeen = Date.now()
+  })
+
+  let buffer = ''
+  watch(data, (raw) => {
+    if (raw === null)
+      return
+    buffer += raw
+    const frames = buffer.split('\n')
+    buffer = frames.pop() ?? ''
+    for (const frame of frames) {
+      const trimmed = frame.trim()
+      if (trimmed)
+        options.onMessage?.(trimmed)
+    }
+  })
+```
+
+- first watch: any message refreshes `lastSeen`.
+- framing watch: `buffer` holds partial text across messages. Append `raw`, split on `\n`.
+  **`frames.pop() ?? ''`** removes *and* returns the last piece (a possibly-incomplete
+  frame) → stash it in `buffer`; the rest are complete → emit each via `onMessage`.
+  `for...of` iterates values (not `for...in`, which iterates indices).
+
+**Chunk 5 — keepalive + cleanup + return**
+
+```ts
+  const pingTimer = setInterval(() => {
+    send('ping')
+    if (Date.now() - lastSeen > pingTimeoutMs)
+      reconnect()
+  }, pingIntervalMs)
+
+  onScopeDispose(() => clearInterval(pingTimer))
+
+  return { status, data, attempts, reconnect, close, send }
+}
+```
+
+- every `pingIntervalMs` (15s): `send('ping')` (placeholder keepalive; no-ops if not
+  open), then if silence exceeds `pingTimeoutMs` (30s) → `reconnect()` (zombie kill).
+- `onScopeDispose` clears the timer on teardown.
+- `return` re-exposes the API (+ hooks fire as side effects).
+- Exported via `export * from './composables/use-tak-connection'`.
