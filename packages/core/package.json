@@ -8,12 +8,18 @@
         ".": "./src/index.ts"
     },
     "scripts": {
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run"
     },
     "peerDependencies": {
         "vue": "^3.5.0"
     },
     "devDependencies": {
+        "happy-dom": "^20.10.6",
+        "vitest": "^4.1.9",
         "vue": "^3.5.0"
+    },
+    "dependencies": {
+        "fast-xml-parser": "^5.9.3"
     }
 }
