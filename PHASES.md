@@ -58,7 +58,7 @@ Monorepo foundation before any feature code.
 
 ---
 
-## Phase 4 — CoT XML parsing and entity types `[ ]`
+## Phase 4 — CoT XML parsing and entity types `[~]`
 
 **Builds:** `parseCoT(xml)` / `serializeCoT(event)` (fast-xml-parser) · full CoT TypeScript types · `cotToGeoJSON` / `geoJSONToCoT` · `useCoTStream(connection)` · parser tests against real samples.
 

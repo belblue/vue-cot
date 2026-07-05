@@ -523,3 +523,98 @@ export function useTakConnection(url: string, options: TakConnectionOptions = {}
 - `onScopeDispose` clears the timer on teardown.
 - `return` re-exposes the API (+ hooks fire as side effects).
 - Exported via `export * from './composables/use-tak-connection'`.
+
+---
+
+## Phase 4 — CoT parsing
+
+**The boundary idea:** outside the app, data is messy XML text (possibly malformed);
+inside, it's clean typed objects. `parseCoT` (receive) and `serializeCoT` (send) are the
+two doors in that wall.
+
+### Types (`protocol/types.ts`)
+
+`CoTEvent` (uid, type, time/start/stale, point, detail?), `CoTPoint` (lat/lon/hae/ce/le —
+all `number`), `CoTContact` (callsign?), `CoTDetail` (contact?). The strict target the
+parser must produce.
+
+### `parseCoT` — XML string → `CoTEvent`
+
+```ts
+const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '' })
+
+export function parseCoT(xml: string): CoTEvent {
+  const raw = parser.parse(xml)
+  const event = raw?.event
+  if (!event)
+    throw new Error('invalid CoT: missing <event> root')
+  const point = event.point
+  if (!point)
+    throw new Error('invalid CoT: <event> missing <point>')
+  return {
+    version: String(event.version),
+    uid: String(event.uid),
+    // ...String(...) for the identity fields...
+    point: { lat: Number(point.lat), /* ...Number(...) for point fields... */ },
+    detail: event.detail ? { contact: /* callsign if present */ } : undefined,
+  }
+}
+```
+
+- `ignoreAttributes: false` — CoT's data lives in attributes; keep them.
+- `attributeNamePrefix: ''` — access as `point.lat`, not `point['@_lat']`.
+- `raw = parser.parse(xml)` → loose nested object; `raw.event` / `event.point` drill in.
+- **Guards** throw a clear, catchable error on missing `<event>`/`<point>` (fail loud,
+  not cryptic).
+- **Coerce at the boundary:** `Number(point.lat)` (attrs arrive as strings) and
+  `String(event.uid)`. We *map* the loose object into the strict type, not just cast it.
+
+### `serializeCoT` — `CoTEvent` → XML string
+
+Mirror of parse: templates the fields back into the exact XML shape. Numbers become
+strings in the template; `parseCoT` coerces them back, so the round trip holds. (Caveat:
+doesn't escape XML-special chars — fine for our controlled data.) Purpose: to **send**
+CoT (`connection.send(serializeCoT(event))`), and to enable round-trip testing.
+
+### Tests (`test/parse.test.ts`, `test/serialize.test.ts`)
+
+- Unit: identity, number coercion (`typeof x === 'number'`), nested callsign, and both
+  error guards (`expect(() => parseCoT('<foo/>')).toThrow('missing <event>')` — pass a
+  **function** so Vitest can catch the throw).
+- Round trip: `expect(parseCoT(serializeCoT(event))).toEqual(event)` — `toEqual` is deep
+  equality (vs `toBe` = identity).
+- Vitest config: `environment: 'happy-dom'`; script `vitest run` (once) vs `vitest`
+  (watch).
+
+### `useCoTStream(url, options)` — plug the parser into the live connection
+
+```ts
+export function useCoTStream(url: string, options: TakConnectionOptions = {}) {
+  const event = ref<CoTEvent | null>(null)
+  const error = ref<Error | null>(null)
+  const connection = useTakConnection(url, {
+    ...options,
+    onMessage: (raw) => {
+      try {
+        event.value = parseCoT(raw)
+        error.value = null
+        options.onMessage?.(raw)
+      }
+      catch (err) {
+        error.value = err as Error
+      }
+    },
+  })
+  return { ...connection, event, error }
+}
+```
+
+- **Wraps `useTakConnection`, injecting its own `onMessage`.** When the framing loop calls
+  `options.onMessage(frame)`, it's calling *this* parser — that's how the stream
+  "subscribes": it **is** the message handler.
+- **try/catch per message:** a malformed frame sets `error` and leaves `event` on its last
+  good value — the connection keeps running, next valid frame updates `event`. One bad
+  message can't kill the stream.
+- Layer stack: `useWebSocket → reconnecting → takConnection → coTStream`. Each wraps the
+  one below and adds one job (socket+retry → framing+keepalive → parsing).
+- Demo reads `event` (typed) and shows callsign/type/position instead of raw XML.
