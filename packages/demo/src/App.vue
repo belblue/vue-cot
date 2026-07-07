@@ -1,25 +1,21 @@
 <script setup lang="ts">
-import { useCoTStream, useEntityStore } from "@vue-cot/core";
+import { storeToRefs } from "pinia";
 
-const { upsert, list, count } = useEntityStore();
-const { status, attempts, reconnect, event, error } = useCoTStream(
-  "ws://localhost:8087",
-  {
-    onEvent: upsert,
-  },
-);
+import { useConnectionStore } from "./stores/connection";
+import EntityList from "./components/EntityList.vue";
+import EntityDetail from "./components/EntityDetail.vue";
+
+const connection = useConnectionStore();
+const { status, attempts } = storeToRefs(connection);
 </script>
 
 <template>
   <h1>vue-cot demo</h1>
   <p>Status: {{ status }} - attempts {{ attempts }}</p>
-  <button @click="reconnect">Reconnect</button>
+  <button @click="connection.reconnect">Reconnect</button>
 
-  <p>Live entities: {{ count }}</p>
-  <ul>
-    <li v-for="entity in list" :key="entity.uid">
-      {{ entity.detail?.contact?.callsign ?? entity.uid }}
-      {{ entity.point.lat.toFixed(4) }}, {{ entity.point.lon.toFixed(4) }}
-    </li>
-  </ul>
+  <div style="display: flex; gap: 2rem">
+    <EntityList />
+    <EntityDetail />
+  </div>
 </template>
