@@ -6,3 +6,4 @@ export * from "./protocol/types";
 export * from "./protocol/parse";
 export * from "./protocol/serialize";
 export * from "./composables/use-cot-stream";
+export * from "./composables/use-entity-store";

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useReconnectingWebSocket, useTakConnection } from "@vue-cot/core";
-import { ref } from "vue";
-import { useCoTStream } from "@vue-cot/core";
+import { useCoTStream, useEntityStore } from "@vue-cot/core";
 
-const messages = ref<string[]>([]);
-
+const { upsert, list, count } = useEntityStore();
 const { status, attempts, reconnect, event, error } = useCoTStream(
   "ws://localhost:8087",
+  {
+    onEvent: upsert,
+  },
 );
 </script>
 
@@ -15,13 +15,11 @@ const { status, attempts, reconnect, event, error } = useCoTStream(
   <p>Status: {{ status }} - attempts {{ attempts }}</p>
   <button @click="reconnect">Reconnect</button>
 
-  <div v-if="event">
-    <h2>{{ event.detail?.contact?.callsign ?? event.uid }}</h2>
-    <p>Type: {{ event.type }}</p>
-    <p>Position: {{ event.point.lat }}, {{ event.point.lon }}</p>
-    <p>Stale: {{ event.stale }}</p>
-  </div>
-  <p v-else>Waiting for fisrt message...</p>
-
-  <p v-if="error" style="color: red">Parse error: {{ error }}</p>
+  <p>Live entities: {{ count }}</p>
+  <ul>
+    <li v-for="entity in list" :key="entity.uid">
+      {{ entity.detail?.contact?.callsign ?? entity.uid }}
+      {{ entity.point.lat.toFixed(4) }}, {{ entity.point.lon.toFixed(4) }}
+    </li>
+  </ul>
 </template>
