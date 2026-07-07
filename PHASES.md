@@ -68,7 +68,7 @@ Monorepo foundation before any feature code.
 
 ---
 
-## Phase 5 — Reactive entity store `[ ]`
+## Phase 5 — Reactive entity store `[x]`
 
 **Builds:** `useEntityStore()` — `Map<UID, Entity>` · single-`rAF` TTL sweep · projections (`byAffiliation`, `visibleAt`, `inBounds`, `selected`) · bulk update path.
 

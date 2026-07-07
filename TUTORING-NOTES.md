@@ -618,3 +618,90 @@ export function useCoTStream(url: string, options: TakConnectionOptions = {}) {
 - Layer stack: `useWebSocket → reconnecting → takConnection → coTStream`. Each wraps the
   one below and adds one job (socket+retry → framing+keepalive → parsing).
 - Demo reads `event` (typed) and shows callsign/type/position instead of raw XML.
+
+---
+
+## Phase 5 — reactive entity store
+
+Holds **every live entity** keyed by `uid` (not just the latest), updating in place and
+expiring on `stale`. File: `packages/core/src/composables/use-entity-store.ts`.
+
+### The store + `upsert`
+
+```ts
+export type Entity = CoTEvent & { receivedAt: number }
+
+const entities = shallowRef(new Map<string, Entity>())
+
+function upsert(event: CoTEvent) {
+  entities.value.set(event.uid, { ...event, receivedAt: Date.now() })
+  triggerRef(entities)
+}
+```
+
+- `Entity = CoTEvent & { receivedAt }` — `&` is intersection (has all of both).
+- **`shallowRef`, not `ref`:** with thousands of entities, `ref` deep-wraps the Map and
+  every entity field in reactive proxies → a "notification storm" on every update.
+  `shallowRef` tracks only the ref itself, not its contents.
+- **`triggerRef` is therefore required:** `shallowRef` only auto-reacts when `.value` is
+  *replaced* (new reference). `set()` mutates the *same* Map, so nothing fires on its own
+  — `triggerRef` manually forces the "trigger" (re-run dependents). Rule: *track on read,
+  trigger on write.*
+- `upsert` = update-or-insert: `set(uid, ...)` replaces if the uid exists, adds if not.
+
+### TTL sweep (single rAF loop)
+
+```ts
+function sweep() {
+  const now = Date.now()
+  let remove = false
+  for (const [uid, entity] of entities.value) {
+    if (Date.parse(entity.stale) < now) {
+      entities.value.delete(uid)
+      remove = true
+    }
+  }
+  if (remove)
+    triggerRef(entities)
+  rafId = requestAnimationFrame(sweep)   // ALWAYS reschedule — outside the if
+}
+rafId = requestAnimationFrame(sweep)
+onScopeDispose(() => cancelAnimationFrame(rafId))
+```
+
+- **`requestAnimationFrame`** runs a fn right before the next repaint (~60/sec), synced to
+  rendering, and **auto-pauses when the tab is hidden** (free battery saving). Re-calling
+  it inside the fn makes a self-perpetuating loop.
+- One loop checks **all** entities per frame — NOT `setTimeout`-per-entity (thousands of
+  timers = memory + scheduling overhead + drift).
+- `Date.parse(entity.stale) < now` → expired → `delete`. Deleting the current key during
+  `for...of` over a Map is safe (adding is not).
+- One `triggerRef` per sweep, only if something changed.
+- **Bug caught:** if `rafId = requestAnimationFrame(sweep)` is put *inside* `if (remove)`,
+  the loop stops after the first frame (nothing stale yet → never reschedules → entities
+  never expire). **The loop must reschedule unconditionally; only the notification is
+  conditional.**
+
+### Projections (computed over the shallowRef)
+
+```ts
+const list = computed(() => Array.from(entities.value.values()))
+const count = computed(() => entities.value.size)
+const byAffiliation = computed(() => { /* group by entity.type.split('-')[1] */ })
+```
+
+- `computed` reads `entities.value` → tracks the shallowRef → recomputes when `triggerRef`
+  fires. Also caches (only re-runs when a dep changed).
+- Chain: `upsert → triggerRef → list/count/byAffiliation recompute → UI re-renders`. The
+  Map is the *same object* throughout; `triggerRef` is what forces the refresh.
+
+### Wiring into the stream + demo
+
+- Added `onEvent?: (event) => void` to `useCoTStream`, fired **per parsed frame** →
+  demo passes `onEvent: upsert`. **Lossless** because it's a callback (fires per event);
+  *watching the `event` ref would drop messages* — refs coalesce (async watchers see only
+  the final value when several arrive in one tick), callbacks don't.
+- Demo destructures `const { upsert, list, count } = useEntityStore()`. **Refs nested in a
+  plain object don't auto-unwrap in templates** (`store.list` stays a raw ref);
+  destructuring to top-level names lets `{{ count }}` / `v-for in list` auto-unwrap.
+  (Pinia's `storeToRefs` solves the reverse problem in Phase 6.)
