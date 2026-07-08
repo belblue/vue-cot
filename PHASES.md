@@ -78,7 +78,7 @@ Monorepo foundation before any feature code.
 
 ---
 
-## Phase 6 — Pinia integration `[ ]`
+## Phase 6 — Pinia integration `[x]`
 
 **Builds:** `stores/connection.ts`, `stores/entities.ts`, `stores/selection.ts` · cross-store composition · demo components consuming via `storeToRefs`.
 
@@ -88,7 +88,7 @@ Monorepo foundation before any feature code.
 
 ---
 
-## Phase 7 — Pinia plugins `[ ]`
+## Phase 7 — Pinia plugins `[x]`
 
 **Builds:** `pinia-persist.ts` (localStorage) · `pinia-tab-sync.ts` (BroadcastChannel) · both configurable per store.
 

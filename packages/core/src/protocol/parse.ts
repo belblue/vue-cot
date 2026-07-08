@@ -1,17 +1,27 @@
-import type { CoTEvent } from "./types";
-import { XMLParser } from "fast-xml-parser";
+import type { CoTEvent } from './types'
+import { XMLParser } from 'fast-xml-parser'
 
 const parser = new XMLParser({
   ignoreAttributes: false,
-  attributeNamePrefix: "",
-});
+  attributeNamePrefix: '',
+})
 
+/**
+ * Parses a CoT (Cursor on Target) XML string into a typed {@link CoTEvent}.
+ * Inverse of {@link serializeCoT}.
+ *
+ * @param xml - A single CoT XML message (an `<event>` element).
+ * @returns The parsed, typed event.
+ * @throws If the XML has no `<event>` root or is missing its `<point>`.
+ */
 export function parseCoT(xml: string): CoTEvent {
-  const raw = parser.parse(xml);
-  const event = raw?.event;
-  if (!event) throw new Error("invalid CoT:missing <event> root");
-  const point = event.point;
-  if (!point) throw new Error("invalid CoT:<event> missing <point>");
+  const raw = parser.parse(xml)
+  const event = raw?.event
+  if (!event)
+    throw new Error('invalid CoT:missing <event> root')
+  const point = event.point
+  if (!point)
+    throw new Error('invalid CoT:<event> missing <point>')
 
   return {
     version: String(event.version),
@@ -35,5 +45,5 @@ export function parseCoT(xml: string): CoTEvent {
             : undefined,
         }
       : undefined,
-  };
+  }
 }

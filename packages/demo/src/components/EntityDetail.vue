@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { storeToRefs } from "pinia";
-import { useSelectionStore } from "../stores/selection";
+import { storeToRefs } from 'pinia'
+import { useSelectionStore } from '../stores/selection'
 
-const { selected } = storeToRefs(useSelectionStore());
+const { selected } = storeToRefs(useSelectionStore())
 </script>
+
 <template>
   <div v-if="selected">
     <h2>{{ selected.detail?.contact?.callsign ?? selected.uid }}</h2>
@@ -14,5 +15,7 @@ const { selected } = storeToRefs(useSelectionStore());
     </p>
     <p>Stale: {{ selected.stale }}</p>
   </div>
-  <div v-else>Select an entity</div>
+  <div v-else>
+    Select an entity
+  </div>
 </template>

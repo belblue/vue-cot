@@ -1,15 +1,30 @@
 import type { WebSocketStatus } from "./use-websocket";
-import { ref, onScopeDispose } from "vue";
+import { onScopeDispose, ref } from "vue";
 import { backoffDelay } from "../utils/backoff";
 
 export type ReconnectingStatus = WebSocketStatus | "reconnecting";
 
-export type ReconnectingOptions = {
+export interface ReconnectingOptions {
   baseMs?: number;
   maxMs?: number;
   maxAttempts?: number;
-};
+}
 
+/**
+ * Like {@link useWebSocket}, but automatically reconnects with exponential
+ * backoff and jitter when the connection drops unexpectedly.
+ *
+ * @param url - WebSocket URL to connect to.
+ * @param options - Backoff tuning: `baseMs` (first delay, default 1000),
+ * `maxMs` (delay cap, default 15000) and `maxAttempts` (default unlimited).
+ * @returns The reactive `status`, `data` and `attempts`, plus `reconnect()`
+ * (force an immediate retry), `close()` (stop for good) and `send()`.
+ *
+ * @example
+ * ```ts
+ * const { status, attempts, reconnect } = useReconnectingWebSocket(url, { maxAttempts: 10 })
+ * ```
+ */
 export function useReconnectingWebSocket(
   url: string,
   options: ReconnectingOptions = {},
@@ -47,12 +62,11 @@ export function useReconnectingWebSocket(
         status.value = "closed";
         return;
       }
+      const delay = backoffDelay(attempts.value, { baseMs, maxMs });
+      attempts.value++;
+      status.value = "reconnecting";
+      reconnectTimer = setTimeout(connect, delay);
     };
-
-    const delay = backoffDelay(attempts.value, { baseMs, maxMs });
-    attempts.value++;
-    status.value = "reconnecting";
-    reconnectTimer = setTimeout(connect, delay);
   }
 
   function reconnect() {
@@ -68,7 +82,7 @@ export function useReconnectingWebSocket(
   function close() {
     manualClose = true;
     clearTimeout(reconnectTimer);
-    ws?.close;
+    ws?.close();
   }
 
   function send(payload: string) {

@@ -1,25 +1,69 @@
 {
-    "name": "@vue-cot/core",
-    "type": "module",
-    "version": "0.1.0",
-    "description": "Vue 3 composables and parser for Cursor on Target (CoT) tactical messaging",
-    "license": "MIT",
+  "name": "@vue-cot/core",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Vue 3 composables and parser for Cursor on Target (CoT) tactical messaging",
+  "license": "MIT",
+  "homepage": "https://github.com/belblue/vue-cot#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/belblue/vue-cot.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/belblue/vue-cot/issues"
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "composables",
+    "cursor-on-target",
+    "cot",
+    "tak",
+    "atak",
+    "wintak",
+    "tak-server",
+    "tactical",
+    "situational-awareness",
+    "geospatial",
+    "websocket",
+    "real-time",
+    "xml-parser"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build"
+  },
+  "publishConfig": {
     "exports": {
-        ".": "./src/index.ts"
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
+      }
     },
-    "scripts": {
-        "typecheck": "tsc --noEmit",
-        "test": "vitest run"
-    },
-    "peerDependencies": {
-        "vue": "^3.5.0"
-    },
-    "devDependencies": {
-        "happy-dom": "^20.10.6",
-        "vitest": "^4.1.9",
-        "vue": "^3.5.0"
-    },
-    "dependencies": {
-        "fast-xml-parser": "^5.9.3"
-    }
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.9.3"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.10.6",
+    "vitest": "^4.1.9",
+    "vue": "^3.5.0"
+  }
 }

@@ -16,3 +16,4 @@ docs/.vitepress/dist/
 # macOS / editor
 .DS_Store
 *.log
+TUTORING-NOTES.md

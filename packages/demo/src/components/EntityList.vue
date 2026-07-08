@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { storeToRefs } from "pinia";
-import { useEntitiesStore } from "../stores/entities";
-import { useSelectionStore } from "../stores/selection";
+import { storeToRefs } from 'pinia'
+import { useEntitiesStore } from '../stores/entities'
+import { useSelectionStore } from '../stores/selection'
 
-const { list, count } = storeToRefs(useEntitiesStore());
-const selection = useSelectionStore();
-const { selectedUid } = storeToRefs(selection);
+const { list, count } = storeToRefs(useEntitiesStore())
+const selection = useSelectionStore()
+const { selectedUid } = storeToRefs(selection)
 </script>
+
 <template>
   <div>
     <h2>Entities {{ count }}</h2>
@@ -23,6 +24,7 @@ const { selectedUid } = storeToRefs(selection);
     </ul>
   </div>
 </template>
+
 <style scoped>
 li {
   cursor: pointer;

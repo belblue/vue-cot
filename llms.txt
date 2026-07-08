@@ -1,0 +1,64 @@
+# vue-cot
+
+> Vue 3 library for Cursor on Target (CoT), the XML messaging protocol used by NATO/US
+> tactical systems (ATAK, WinTAK, TAK Server). It connects to a live CoT stream over a
+> WebSocket, parses each message into typed objects, and keeps a reactive, self-expiring
+> store of entities (units, vehicles, sensors) ready to render in any Vue 3 app.
+
+Package: `@vue-cot/core` (npm). Peer dependency: `vue@^3.5`. Written in TypeScript, ESM + CJS.
+The library is pure logic — no UI. Repo: https://github.com/belblue/vue-cot
+
+## Pipeline
+
+WebSocket (CoT XML) -> reconnect/keepalive -> parse XML to typed -> reactive Map<uid, Entity> + TTL -> your Vue app
+
+Each layer is a composable that wraps the previous one; use the highest level you need.
+
+## Public API
+
+Composables (each returns reactive refs; all clean up automatically via `onScopeDispose`):
+
+- `useWebSocket(url)` -> `{ status, data, send }`: raw reactive WebSocket wrapper. No reconnect.
+- `useReconnectingWebSocket(url, options?)` -> `{ status, data, attempts, reconnect, close }`:
+  adds exponential-backoff-with-jitter reconnection. Options: `baseMs`, `maxMs`, `maxAttempts`.
+- `useTakConnection(url, options?)` -> reconnecting socket + ping keepalive + zombie detection +
+  newline message framing. Hooks: `onConnect`, `onMessage`, `onDisconnect`, `onError`.
+  Options also: `pingIntervalMs`, `pingTimeoutMs`.
+- `useCoTStream(url, options?)` -> `{ ...connection, event, error }`: parses each framed message
+  into a `CoTEvent`. Lossless per-frame `onEvent(event)` callback option.
+- `useEntityStore()` -> `{ entities, upsert, list, count }`: reactive `Map<uid, Entity>` with a
+  single-`requestAnimationFrame` TTL sweep that evicts entities past their `stale` time.
+
+Pure protocol functions (Vue-free):
+
+- `parseCoT(xml: string): CoTEvent` — parse a CoT XML string into a typed object.
+- `serializeCoT(event: CoTEvent): string` — serialise a typed object back to CoT XML.
+- `backoffDelay(attempt: number, options?): number` — exponential backoff delay in ms.
+
+Types: `CoTEvent`, `CoTPoint`, `CoTContact`, `CoTDetail`, `WebSocketStatus`,
+`ReconnectingStatus`, `ReconnectingOptions`, `TakConnectionOptions`, `CoTStreamOptions`, `Entity`.
+
+## CoTEvent shape
+
+`{ version, uid, type, time, start, stale, how?, point: { lat, lon, hae, ce, le }, detail?: { contact?: { callsign?, endpoint? } } }`
+
+`type` follows the CoT grammar, e.g. `a-f-G-U-C-I` (atom-friendly-Ground-Unit-Combat-Infantry).
+`stale` is an ISO timestamp after which the entity is considered expired.
+
+## Example
+
+```ts
+import { useCoTStream, useEntityStore } from '@vue-cot/core'
+
+const store = useEntityStore()
+const { status, error } = useCoTStream('wss://tak.example/cot', {
+  onEvent: (event) => store.upsert(event),
+})
+// store.list is a reactive Entity[] you can render with v-for; stale entities self-expire.
+```
+
+## Install
+
+```bash
+npm install @vue-cot/core vue
+```
