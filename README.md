@@ -7,6 +7,8 @@ by NATO/US tactical systems such as ATAK, WinTAK and TAK Server.
 > work in progress. Actively maintained (issues answered, safe dependency updates merged,
 > occasional patch releases).
 
+**Live demo:** [vue-cot-demo.vercel.app](https://vue-cot-demo.vercel.app/) — runs entirely in the browser with a built-in mock CoT feed.
+
 Related packages (`@vue-tactical/map`, `@vue-tactical/symbols`, `@vue-tactical/coords`)
 would be interesting to build but are **not currently planned**. Open an issue if you'd
 like to collaborate on them — PRs welcome.

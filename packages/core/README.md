@@ -6,6 +6,8 @@ by NATO/US tactical systems such as ATAK, WinTAK and TAK Server.
 > **Status:** feature-complete **v0.1**. A well-scoped, self-contained library — not a
 > work in progress. Actively maintained.
 
+**Live demo:** [vue-cot-demo.vercel.app](https://vue-cot-demo.vercel.app/) — runs entirely in the browser with a built-in mock CoT feed.
+
 Related packages (`@vue-tactical/map`, `@vue-tactical/symbols`, `@vue-tactical/coords`)
 would be interesting to build but are **not currently planned** — open an issue if you'd
 like to collaborate. PRs welcome.
@@ -60,6 +62,7 @@ releases if there's demand — file an issue.
 
 ## Links
 
+- Live demo: https://vue-cot-demo.vercel.app/
 - Repository & issues: https://github.com/belblue/vue-cot
 - Contributing: issues and PRs welcome; safe fixes and dependency updates get merged,
   larger changes are best discussed in an issue first.
