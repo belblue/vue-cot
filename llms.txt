@@ -5,7 +5,7 @@
 > WebSocket, parses each message into typed objects, and keeps a reactive, self-expiring
 > store of entities (units, vehicles, sensors) ready to render in any Vue 3 app.
 
-Package: `@vue-cot/core` (npm). Peer dependency: `vue@^3.5`. Written in TypeScript, ESM + CJS.
+Package: `vue-cot` (npm). Peer dependency: `vue@^3.5`. Written in TypeScript, ESM + CJS.
 The library is pure logic — no UI. Repo: https://github.com/belblue/vue-cot
 
 ## Pipeline
@@ -48,7 +48,7 @@ Types: `CoTEvent`, `CoTPoint`, `CoTContact`, `CoTDetail`, `WebSocketStatus`,
 ## Example
 
 ```ts
-import { useCoTStream, useEntityStore } from '@vue-cot/core'
+import { useCoTStream, useEntityStore } from 'vue-cot'
 
 const store = useEntityStore()
 const { status, error } = useCoTStream('wss://tak.example/cot', {
@@ -60,5 +60,5 @@ const { status, error } = useCoTStream('wss://tak.example/cot', {
 ## Install
 
 ```bash
-npm install @vue-cot/core vue
+npm install vue-cot vue
 ```

@@ -10,7 +10,7 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@vue-cot/core": "workspace:*",
+    "vue-cot": "workspace:*",
     "pinia": "^3.0.4",
     "vue": "^3.5.35"
   },

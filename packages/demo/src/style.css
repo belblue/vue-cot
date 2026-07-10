@@ -1,0 +1,78 @@
+:root {
+  /* operator aesthetic — dark chrome, amber for active states only */
+  --bg: #0b0d10;
+  --panel: #14181d;
+  --panel-2: #191f26;
+  --panel-border: #242c35;
+  --text: #d7dee5;
+  --text-dim: #8a95a1;
+  --accent: #f59e0b;
+
+  /* CoT affiliation colours (type char at index 2: f/h/n/u) */
+  --friendly: #3b82f6;
+  --hostile: #ef4444;
+  --neutral: #22c55e;
+  --unknown: #eab308;
+
+  --radius: 8px;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", monospace;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(
+    155deg,
+    #000 0%,
+    var(--bg) 42%,
+    color-mix(in srgb, var(--accent) 35%, #000) 88%,
+    var(--accent) 150%
+  );
+  background-attachment: fixed;
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* shared chrome */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+}
+
+.mono {
+  font-family: var(--mono);
+}

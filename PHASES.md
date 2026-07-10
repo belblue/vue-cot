@@ -14,7 +14,7 @@ Monorepo foundation before any feature code.
 - [x] pnpm workspace root (`pnpm-workspace.yaml`, private root `package.json`)
 - [x] `.gitignore`, shared `tsconfig.base.json` (strict, `noUncheckedIndexedAccess`)
 - [x] ESLint with `@antfu/eslint-config` (no Prettier)
-- [x] `@vue-cot/core` package (library, Vue as `peerDependency`)
+- [x] `vue-cot` package (library, Vue as `peerDependency`)
 - [x] `@vue-cot/server` package (Node, `@types/node`)
 - [x] `@vue-cot/demo` package (Vite + Vue, linked to core via `workspace:*`)
 - [x] git repo on `develop`, initial commit
@@ -30,7 +30,7 @@ Monorepo foundation before any feature code.
 
 - [x] `useWebSocket` — reactive `status` + `data`, four event handlers
 - [x] `onScopeDispose` cleanup (closes the socket)
-- [x] export from `@vue-cot/core`
+- [x] export from `vue-cot`
 - [x] mock server emitting one CoT message per second
 - [x] demo wired to `ws://localhost:8087`, status + messages on screen
 
@@ -100,7 +100,7 @@ Monorepo foundation before any feature code.
 
 ## Phase 8 — Docs, polish, publish, launch `[ ]`
 
-**Builds:** VitePress docs · deployed demo (Cloudflare Pages) · README badges/usage · `@vue-cot/core@0.1.0` on npm · launch posts.
+**Builds:** VitePress docs · deployed demo (Cloudflare Pages) · README badges/usage · `vue-cot@0.1.0` on npm · launch posts.
 
 **Teaches:** publish hygiene (`type`/`main`/`module`/`types`/`exports`/`sideEffects`), ESM+CJS dual output with tsup, semantic versioning with changesets, writing developer-facing docs, the Show HN formula.
 

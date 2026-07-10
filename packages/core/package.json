@@ -1,5 +1,5 @@
 {
-  "name": "@vue-cot/core",
+  "name": "vue-cot",
   "type": "module",
   "version": "0.1.0",
   "description": "Vue 3 composables and parser for Cursor on Target (CoT) tactical messaging",
