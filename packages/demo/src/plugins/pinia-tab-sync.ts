@@ -20,6 +20,7 @@ export function tabSyncPlugin({ store, options }: PiniaPluginContext) {
 }
 
 declare module 'pinia' {
+  // eslint-disable-next-line unused-imports/no-unused-vars
   interface DefineStoreOptionsBase<S, Store> {
     syncTabs?: boolean
   }

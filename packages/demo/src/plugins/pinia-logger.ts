@@ -4,8 +4,6 @@ export function loggerPlugin({ store, options }: PiniaPluginContext) {
   if (!options.log)
     return
 
-  const key = `vue-cot:${store.$id}`
-
   /* set the variable will store the logs */
   store.$onAction(({ name, args }) => {
     console.warn(`[${store.$id}] action: ${name}`, args)
@@ -13,6 +11,7 @@ export function loggerPlugin({ store, options }: PiniaPluginContext) {
 }
 
 declare module 'pinia' {
+  // eslint-disable-next-line unused-imports/no-unused-vars
   interface DefineStoreOptionsBase<S, Store> {
     log?: boolean
   }

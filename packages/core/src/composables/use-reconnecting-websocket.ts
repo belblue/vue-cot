@@ -1,13 +1,13 @@
-import type { WebSocketStatus } from "./use-websocket";
-import { onScopeDispose, ref } from "vue";
-import { backoffDelay } from "../utils/backoff";
+import type { WebSocketStatus } from './use-websocket'
+import { onScopeDispose, ref } from 'vue'
+import { backoffDelay } from '../utils/backoff'
 
-export type ReconnectingStatus = WebSocketStatus | "reconnecting";
+export type ReconnectingStatus = WebSocketStatus | 'reconnecting'
 
 export interface ReconnectingOptions {
-  baseMs?: number;
-  maxMs?: number;
-  maxAttempts?: number;
+  baseMs?: number
+  maxMs?: number
+  maxAttempts?: number
 }
 
 /**
@@ -33,64 +33,66 @@ export function useReconnectingWebSocket(
     baseMs = 1000,
     maxMs = 15_000,
     maxAttempts = Number.POSITIVE_INFINITY,
-  } = options;
+  } = options
 
-  const status = ref<ReconnectingStatus>("closed");
-  const data = ref<string | null>(null);
-  const attempts = ref(0);
+  const status = ref<ReconnectingStatus>('closed')
+  const data = ref<string | null>(null)
+  const attempts = ref(0)
 
-  let ws: WebSocket | null = null;
-  let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
-  let manualClose = false;
+  let ws: WebSocket | null = null
+  let reconnectTimer: ReturnType<typeof setTimeout> | undefined
+  let manualClose = false
 
   function connect() {
-    ws = new WebSocket(url);
-    status.value = "connecting";
+    ws = new WebSocket(url)
+    status.value = 'connecting'
 
     ws.onopen = () => {
-      status.value = "open";
-      attempts.value = 0;
-    };
+      status.value = 'open'
+      attempts.value = 0
+    }
     ws.onmessage = (event: MessageEvent) => {
-      if (typeof event.data === "string") data.value = event.data;
-    };
+      if (typeof event.data === 'string')
+        data.value = event.data
+    }
     ws.onerror = () => {
-      console.error("[useReconnectingWebSocket] connection error");
-    };
+      console.error('[useReconnectingWebSocket] connection error')
+    }
     ws.onclose = () => {
       if (manualClose || attempts.value >= maxAttempts) {
-        status.value = "closed";
-        return;
+        status.value = 'closed'
+        return
       }
-      const delay = backoffDelay(attempts.value, { baseMs, maxMs });
-      attempts.value++;
-      status.value = "reconnecting";
-      reconnectTimer = setTimeout(connect, delay);
-    };
+      const delay = backoffDelay(attempts.value, { baseMs, maxMs })
+      attempts.value++
+      status.value = 'reconnecting'
+      reconnectTimer = setTimeout(connect, delay)
+    }
   }
 
   function reconnect() {
-    clearTimeout(reconnectTimer);
-    attempts.value = 0;
+    clearTimeout(reconnectTimer)
+    attempts.value = 0
     if (ws) {
-      ws.onclose = null;
-      ws.close();
+      ws.onclose = null
+      ws.close()
     }
-    manualClose = false;
-    connect();
+    manualClose = false
+    connect()
   }
   function close() {
-    manualClose = true;
-    clearTimeout(reconnectTimer);
-    ws?.close();
+    manualClose = true
+    clearTimeout(reconnectTimer)
+    ws?.close()
   }
 
   function send(payload: string) {
-    if (ws && ws.readyState === WebSocket.OPEN) ws.send(payload);
+    if (ws && ws.readyState === WebSocket.OPEN)
+      ws.send(payload)
   }
 
-  connect();
-  onScopeDispose(close);
+  connect()
+  onScopeDispose(close)
 
-  return { status, data, attempts, reconnect, close, send };
+  return { status, data, attempts, reconnect, close, send }
 }
